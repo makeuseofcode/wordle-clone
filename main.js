@@ -1,6 +1,5 @@
 import "./style.css"
 import Toastify from 'toastify-js'
-let app = document.querySelector("#app");
 let board = document.querySelector("#board");
 let message = document.querySelector("#message");
 let keys = "QWERTYUIOPASDFGHJKLZXCVBNM".split("");
@@ -19,8 +18,9 @@ let boardContent = [
 ];
 let currentRow = 0;
 let currentBox = 0;
-let secretWord = "SIDED";
-let pastEntries = [];
+let secretWord;
+
+
 
 for (let i = 0; i <= 5; i++) {
     let row = document.createElement('div')
@@ -52,10 +52,6 @@ keys.forEach(entry => {
 })
 
 
-let rows = [...document.querySelectorAll('div')].filter(x => x.className.includes("row-"));
-let boxes = [];
-rows.forEach(row => [...row.children].forEach(child => boxes.push(child)))
-
 function getNewWord() {
     async function fetchWord() {
         try {
@@ -68,7 +64,6 @@ function getNewWord() {
             }
         } catch (error) {
             message.innerText = `Something went wrong. \n${error}\nCheck your internet connection.`;
-            console.log("Something went wrong")
         }
     }
 
@@ -80,10 +75,13 @@ function getNewWord() {
 }
 
 function main() {
-    message.style.display = "none";
+    let rows = [...document.querySelectorAll('div')].filter(x => x.className.includes("row-"));
+    let boxes = [];
+    rows.forEach(row => [...row.children].forEach(child => boxes.push(child)))
     boxes.forEach((box) => {
         box.classList.add("empty");
     })
+    message.style.display = "none";
 
     window.addEventListener('keyup', (e) => {
         if (isValidCharacter(e.key)) {
@@ -115,29 +113,6 @@ function renderBox(row, box, data) {
     [...document.querySelector(`.row-${row}`).children][box].innerText = data;
 }
 
-function evaluate(row) {
-    if (currentRow === 4) {
-        showBtn.removeAttribute('disabled')
-    }
-    let guess = boardContent[row].join('').toUpperCase();
-    pastEntries.push(guess);
-    [...guess].forEach((entry, i) => {
-        if (entry === secretWord[i]) {
-            setColor("green", entry, i);
-        } else if (secretWord.includes(entry)) {
-            setColor("yellow", entry, i)
-        } else {
-            setColor("grey", entry, i)
-        }
-    })
-
-    function setColor(color, entry, i) {
-        // Set the keyboard key color
-        document.querySelector(`button[data-key=${entry.toUpperCase()}]`).style.backgroundColor = color;
-        // Set the box color
-        [...document.querySelector(`.row-${row + 1}`).children][i].style.backgroundColor = color;
-    }
-}
 
 function insertKey(key) {
     if (key === "Backspace".toUpperCase() && currentRow < boardContent.length) {
@@ -153,12 +128,37 @@ function insertKey(key) {
             currentBox++;
         }
         if (currentRow < boardContent.length && boardContent[currentRow][currentBox] !== 0) {
-            evaluate(currentRow);
+            evaluate(currentRow, key);
             currentBox = 0;
             currentRow++;
         }
     }
 }
 
-// getNewWord();
-main();
+function evaluate(row) {
+    if (currentRow === 4) {
+        showBtn.removeAttribute('disabled')
+    }
+    let guess = boardContent[row].join('').toUpperCase();
+    let answer = secretWord.split("");
+    let colors = guess
+        .split("")
+        .map((letter, idx) => letter == answer[idx] ? (answer[idx] = false) : letter)
+        .map((letter, idx) =>
+            letter
+                ? (idx = answer.indexOf(letter)) < 0
+                    ? "grey"
+                    : (answer[idx] = "yellow")
+                : "green"
+        );
+    setColor(colors);
+    function setColor(colors) {
+        // Set the keyboard key color
+        colors.forEach((color, index) => {
+            document.querySelector(`button[data-key=${guess[index].toUpperCase()}]`).style.backgroundColor = color;
+            [...document.querySelector(`.row-${row + 1}`).children][index].style.backgroundColor = color;
+        })
+    }
+}
+
+getNewWord();
