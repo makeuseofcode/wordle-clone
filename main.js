@@ -2,10 +2,11 @@ import "./style.css"
 import Toastify from 'toastify-js'
 let app = document.querySelector("#app");
 let board = document.querySelector("#board");
-let loading = document.querySelector("#loading");
+let message = document.querySelector("#message");
 let keys = "QWERTYUIOPASDFGHJKLZXCVBNM".split("");
 let restartBtn = document.querySelector("#restart-btn");
 let showBtn = document.querySelector("#show-btn");
+showBtn.setAttribute("disabled", "true");
 keys.push("Backspace");
 let keyboard = document.querySelector(".keyboard");
 let boardContent = [
@@ -18,7 +19,8 @@ let boardContent = [
 ];
 let currentRow = 0;
 let currentBox = 0;
-let secretWord;
+let secretWord = "SIDED";
+let pastEntries = [];
 
 for (let i = 0; i <= 5; i++) {
     let row = document.createElement('div')
@@ -55,23 +57,30 @@ let boxes = [];
 rows.forEach(row => [...row.children].forEach(child => boxes.push(child)))
 
 function getNewWord() {
-    try {
-        fetch("https://random-word-api.herokuapp.com/word?length=5").then(res => {
-            console.log(res);
-            return res.json();
-        }).then(data => {
-            secretWord = data[0].toUpperCase();
-            main();
-        });
-    } catch (error) {
-        console.log("Something went wrong")
+    async function fetchWord() {
+        try {
+            const response = await fetch("https://random-word-api.herokuapp.com/word?length=5");
+            if (response.ok) {
+                const data = await response.json();
+                return data;
+            } else {
+                throw new Error("Something went wrong!")
+            }
+        } catch (error) {
+            message.innerText = `Something went wrong. \n${error}\nCheck your internet connection.`;
+            console.log("Something went wrong")
+        }
     }
+
+    fetchWord().then(data => {
+        secretWord = data[0].toUpperCase();
+        main();
+    })
 
 }
 
-
 function main() {
-    loading.style.display = "none";
+    message.style.display = "none";
     boxes.forEach((box) => {
         box.classList.add("empty");
     })
@@ -87,22 +96,11 @@ function main() {
     })
 
     showBtn.addEventListener('click', () => {
-        if (currentRow > 4) {
-            // alert(`Alright fine! the answer is ${secretWord}`)
-            Toastify({
-                text: `Alright fine! the answer is ${secretWord}`,
-                duration: 2500,
-                className: "alert",
-            }).showToast();
-        }
-        else {
-            Toastify({
-                text: `${4 - currentRow} tries before you can view the answer.`,
-                duration: 2500, // `top` or `bottom`
-                className: "alert",
-                position: "center",
-            }).showToast();
-        }
+        Toastify({
+            text: `Alright fine! the answer is ${secretWord}`,
+            duration: 2500,
+            className: "alert",
+        }).showToast();
     })
 
     restartBtn.addEventListener('click', () => {
@@ -118,23 +116,27 @@ function renderBox(row, box, data) {
 }
 
 function evaluate(row) {
+    if (currentRow === 4) {
+        showBtn.removeAttribute('disabled')
+    }
     let guess = boardContent[row].join('').toUpperCase();
+    pastEntries.push(guess);
     [...guess].forEach((entry, i) => {
-        if (secretWord.includes(entry)) {
-            if (entry === secretWord[i]) {
-                // Set the keyboard key color
-                document.querySelector(`button[data-key=${entry.toUpperCase()}]`).style.backgroundColor = "green";
-                // Set the box color
-                [...document.querySelector(`.row-${row + 1}`).children][i].style.backgroundColor = "green";
-            } else {
-                document.querySelector(`button[data-key=${entry.toUpperCase()}]`).style.backgroundColor = "yellow";;
-                [...document.querySelector(`.row-${row + 1}`).children][i].style.backgroundColor = "yellow";
-            }
+        if (entry === secretWord[i]) {
+            setColor("green", entry, i);
+        } else if (secretWord.includes(entry)) {
+            setColor("yellow", entry, i)
         } else {
-            document.querySelector(`button[data-key=${entry.toUpperCase()}]`).style.backgroundColor = "grey";;
-            [...document.querySelector(`.row-${row + 1}`).children][i].style.backgroundColor = "grey";
+            setColor("grey", entry, i)
         }
     })
+
+    function setColor(color, entry, i) {
+        // Set the keyboard key color
+        document.querySelector(`button[data-key=${entry.toUpperCase()}]`).style.backgroundColor = color;
+        // Set the box color
+        [...document.querySelector(`.row-${row + 1}`).children][i].style.backgroundColor = color;
+    }
 }
 
 function insertKey(key) {
@@ -158,4 +160,5 @@ function insertKey(key) {
     }
 }
 
-getNewWord();
+// getNewWord();
+main();
