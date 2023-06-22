@@ -10,17 +10,17 @@
 
 <body>
   <div id="app">
-    <h1>Wordle Clone</h1>
-    <div id="controls">
-      <button id="restart-btn">Restart</button>
-      <button id="show-btn">Show Answer</button>
+    <div>
+      <h1>Wordle Clone</h1>
+      <div id="controls">
+        <button id="restart-btn">Restart</button>
+        <button id="show-btn">Show Answer</button>
+      </div>
+      <div id="loading">Please wait. The Game is loading...</div>
     </div>
-    <div id="loading">Please wait. The Game is loading...</div>
-    <div id="board"></div>
-    <div id="keyboard">
-      <div class="keyrow"></div>
-      <!-- <div class="keyrow"></div> -->
-      <!-- <div class="keyrow"></div> -->
+    <div id="interface">
+      <div id="board"></div>
+        <div class="keyboard"></div>
     </div>
   </div>
   <script type="module" src="/main.js"></script>

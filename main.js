@@ -7,7 +7,7 @@ let keys = "QWERTYUIOPASDFGHJKLZXCVBNM".split("");
 let restartBtn = document.querySelector("#restart-btn");
 let showBtn = document.querySelector("#show-btn");
 keys.push("Backspace");
-let keyrow = document.querySelector(".keyrow");
+let keyboard = document.querySelector(".keyboard");
 let boardContent = [
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
@@ -46,7 +46,7 @@ keys.forEach(entry => {
             document.querySelector(`button[data-key=${entry.toUpperCase()}]`).blur();
         }, 250)
     })
-    keyrow.append(key);
+    keyboard.append(key);
 })
 
 
@@ -55,12 +55,18 @@ let boxes = [];
 rows.forEach(row => [...row.children].forEach(child => boxes.push(child)))
 
 function getNewWord() {
-    fetch("https://random-word-api.herokuapp.com/word?length=5").then(res => {
-        return res.json();
-    }).then(data => {
-        secretWord = data[0].toUpperCase();
-        main();
-    });
+    try {
+        fetch("https://random-word-api.herokuapp.com/word?length=5").then(res => {
+            console.log(res);
+            return res.json();
+        }).then(data => {
+            secretWord = data[0].toUpperCase();
+            main();
+        });
+    } catch (error) {
+        console.log("Something went wrong")
+    }
+
 }
 
 
